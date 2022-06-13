@@ -496,8 +496,9 @@ server {
 
 ```
 
-##### Open port 80 on the security group of your validator ec2 instance.
+##### Open port 80 on the security group of your validator ec2 instance for 0.0.0.0/0. 
+[here](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/authorizing-access-to-an-instance.html).
 
 ##### Access the RPC
-Now access your RPC at  http://<your validator elastic ip>/ext/bc/j6TJTXGmMWWBvYHsyp1bZrkiSDJVoG4FpaWz4LrTjSjpE6zxN/rpc
+Now access your RPC at  http://[your validator elastic ip]/ext/bc/[Blockchain Id]/rpc
 
