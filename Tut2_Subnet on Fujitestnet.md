@@ -1,91 +1,94 @@
+# Subnet on Fuji Testnet
+In this tutorial we will create a subnet on FUji testnet "amafanssubnet". 
+You should have a node connected and synced to Fuji testnet. You can run your validator on the same node or on another node also. For the sake of simplicity, I am going to run the validator node on the same fuji node.
+Please follow the step by step guide.
 
-subnetname: amafanssubnet
+##   Download GoLang
 
-### Install subnet-cli
-#### Download GoLang
 ```
-curl -OL https://golang.org/dl/go1.18.3.linux-amd64.tar.gz
+curl -OL https://golang.org/dl/go1.18.3.linux-amd64.tar.gz=
 sudo tar -C /usr/local -xvf go1.18.3.linux-amd64.tar.gz
 ```
-#### Add Go paths in your ~/.bashrc
-
+####  Add Go paths in your ~/.bashrc
 Add these path variables in your ~/.bashrc file and reload it
+
 ```
 export GOPATH=$HOME/go
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
 ```
-Reload it
+Reload your bashrc for these changes to take effect on the same window.
 ```
 source ~/.bashrc
 ```
-Now, Check go variables 
+Now, Check go version to see if everything is upto the mark.
 ```
-go env
+go version
+output: go version go1.18.3 linux/amd64
 ```
-The output should be several go variables.
 
-#### Install subnet-cli.
+##   Install subnet-cli
+
 ```
 git clone https://github.com/ava-labs/subnet-cli.git;
 cd subnet-cli;
 go install -v .;
 ```
 
+##  Create your validator keys 
 
-
-### Create Keys
 Use this command to create your private key and fund it using fuji faucet.
-I created a new directotyu called keys under my home directory and then ran this 
-command 
 
+I created a new directoty "keys" under my home directory and then ran this command to generate a private key.
 ```
+cd keys
 subnet-cli create key
 ```
-to generate .subnet-cli.pk. Copy the private key just generated 
+A new file .subnet-cli.pk will be created with a private key. Copy the private key.
+By default, subnet-cli uses the key specified in file .subnet-cli.pk on the P-Chain to pay for the transaction fee,
+If you want to use some other key at some other location on this server, use --private-key-path later to overwrite. Please make sure that you have enough fund on this P-Chain address to pay for transactions.
 
+####  To fund this private key on Fuji TestNet P-chain. 
 
-By default, subnet-cli uses the key specified in file .subnet-cli.pk on the P-Chain to pay for the transaction fee, 
-unless --private-key-path is used to overwrite. Please make sure that you have enough fund on this P-Chain address to pay for transactions.
+##### Address corresponding to this private key 
+Use your private key in the .subnet-cli.pk file on the web wallet to access this https://wallet.avax.network/. (Private Key is the first option on the web wallet). And pick Fuji on the top right corner as the network and locate your C-Chain address which starts with 0x. Copy this address.
+##### Request funds from fujitestnet faucet.
+Request funds from the faucet using your C-Chain address at https://faucet.avax.network/. Wait for the transaction to get confirmed.
 
-To get fund on this key on Fuji TestNet, follow these steps:
+##### Move funds from C-chain to P-chain
+Move the test funds from the C-Chain to the P-Chain by clicking on the Cross Chain on the left side of the https://wallet.avax.network/
+![C-chain to P-chain](/assets/ChaintoPchain.png)
 
-User your private key in the .subnet-cli.pk file on the web wallet to access this wallet. (Private Key is the first option on the web wallet). 
-And pick Fuji on the top right corner as the network and locate your C-Chain address which starts with 0x.
-Request funds from the faucet using your C-Chain address.
-Move the test funds from the C-Chain to the P-Chain by clicking on the Cross Chain on the left side of the web wallet 
-(more details can be found on the tutorial between C/P chains).
 After following these 3 steps, your test key should now have a balance on the P-Chain on Fuji Testnet.
 
-
-### Create VMID
+##  Create VMID
+First, you'll need to compile the subnet-evm into a binary that AvalancheGo can interact with.
 ```
 git clone https://github.com/ava-labs/subnet-evm.git
 cd subnet-evm/
 subnet-cli create VMID amafanssubnetevm
 ```
-Create a VMID with string amafanssubnetevm which you can change to whatever you like. 
-Output will be: 
+Create a VMID with string `amafanssubnetevm` which you can change to whatever you like. This command is used to generate a valid VMID based on some string to uniquely identify a VM. This should stay the same for all versions of the VM, so it should be based on a word rather than the hash of some code.
+Output will be:
+```
 created a new VMID juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj from amafanssubnetevm
-
+```
 Now issue this command to build
 ```
-ubuntu@ip-172-31-90-23:~/subnet-evm$ ./scripts/build.sh build/juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj
+./scripts/build.sh build/juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj
 ```
-
 This command will create a binary in the build folder
 ```
-    ubuntu@ip-172-31-90-23:~/subnet-evm$ ls build/
-    juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj
+ubuntu@ip-172-31-90-23:~/subnet-evm$ ls build/
+juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj
 ```
 
-### Move Binary
+## Move Binary
 
-#### Build from source manually 
-
-Once the subnet-evm binary is built, you'll need to move it to AvalancheGo's plugin directory (within the --build-dir) so it can be 
-run by your node. When building avalanchego from source (see Run an Avalanche Node Manually), this defaults to avalanchego/build/plugins 
-in which avalanchego is the directory where you have checked out AvalancheGo project. This build directory is structured as:
-
+Choose option based on how you had built your "avalanchego".
+##### Build from source manually
+Once the `subnet-evm` binary is built, you'll need to move it to AvalancheGo's plugin directory (within the [--build-dir](https://docs.avax.network/nodes/maintain/avalanchego-config-flags#--build-dir-string)) 
+so it can be run by your node. When building avalanchego from source (see  [Run an Avalanche Node Manually ](https://docs.avax.network/nodes/build/run-avalanche-node-manually)), 
+this defaults to avalanchego/build/plugins in which avalanchego is the directory where you have checked out AvalancheGo project. This build directory is structured as:
 
 build-dir
 |_avalanchego (note: this is the AvalancheGo binary, not a directory)
@@ -94,7 +97,7 @@ build-dir
 
 To put the subnet-evm binary in the right place, run the following command (assuming the avalanchego and subnet-evm repos are in the same folder):
 
-mv ./subnet-evm/build/srEXiWaHuhNyGwPUi444Tu47ZEDwxTWrbQiuD7FmgSAQ6X7Dy ./avalanchego/build/plugins;
+mv ./subnet-evm/build/juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj ./avalanchego/build/plugins;
 
 
 #### using the Install Script 
@@ -107,13 +110,13 @@ avalanche-node
 mv subnet-evm/build/juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj avalanche-node/plugins/
 
 
-### Your genesis file
+## Genesis file
 Create a Custom Subnet Configuration
-
+```
 avalanche subnet create amafanssubnet
-
-
-#### Choose EVM, Forour case use SubnetEVM
+```
+It will present you several options, Let us explore them one by one.
+1. Choose EVM, For our case, use SubnetEVM
 ```
 ubuntu@ip-172-31-90-23:~$ avalanche subnet create amafanssubnet
 Use the arrow keys to navigate: ↓ ↑ → ←
@@ -121,8 +124,7 @@ Use the arrow keys to navigate: ↓ ↑ → ←
   ▸ SubnetEVM
     Custom
 ```
-
-#### Choose chainID, 
+2. Choose chainID, 
 Choose chainid which is not being used by any existing EVM chains 
 Check here: https://chainlist.org/
 ```
@@ -130,7 +132,7 @@ Enter your subnet's ChainId. It can be any positive integer.
 ✗ ChainId: █
 ```
 
-#### Choose Fee
+3. Choose Fee
 ```
 ? How would you like to set fees:
     Low disk use    / Low Throughput    1.5 mil gas/s (C-Chain's setting)
@@ -139,7 +141,7 @@ Enter your subnet's ChainId. It can be any positive integer.
     Customize fee config
 ```
 
-#### Airdrop Tokens in the beginning of the chain
+4. Airdrop Tokens in the beginning of the chain
 ```
 ? How would you like to distribute funds:
     Airdrop 1 million tokens to the default address (do not use in production)
@@ -152,16 +154,16 @@ If you want to add more airdrop, Keep clicking on Yes
   ▸ No
     Yes
 ```
-#### Adding a custom precompile
-We will come back to this later, Lets continue with "No" option.
+5. Adding a custom precompile
+We will revist this option in later tutorials, Lets continue with "No" option.
 ```
 ? Advanced: Would you like to add a custom precompile to modify the EVM?:
   ▸ No
     Yes
 
 ```
-
-#### Check your subnet 
+Click on No and your subnet will be created.
+##### Check your subnet 
 ```
 ubuntu@ip-172-31-90-23:~$ avalanche subnet list
 
@@ -172,7 +174,7 @@ ubuntu@ip-172-31-90-23:~$ avalanche subnet list
 +---------------+---------------+-----------+
 ```
 
-#### Setting a Custom Fee Recipient
+##### Setting a Custom Fee Recipient
 By default, all fees are burned (sent to the blackhole address with "allowFeeRecipients": false). However, 
 it is possible to enable block producers to set a fee recipient (who will get compensated for blocks they produce).
 To enable this feature, you'll need to add the following to your genesis file (under the "config" key):
@@ -192,7 +194,7 @@ They need to update their EVM chain config with the following to specify where t
 }
 ```
 
-#### Get your genesis file for the subnet 
+##### Get your genesis file for the subnet 
 ```
 avalanche subnet describe firstsubnet --genesis
 {
@@ -259,14 +261,9 @@ avalanche subnet describe firstsubnet --genesis
 save this file in your home directory with 
 amafanssubnet_genesis.json
 
+## Run your subnet EVM
 
-
-
-
-
-### Run your subnet EVM
-
-Dtep 1: 
+Step 1: 
 You must have a fuji node up and running, Refer to this artcile to deploy a fuji node on AWS.
 Get your nodeID by this command
 ```
@@ -298,10 +295,15 @@ subnet-cli failed insufficient funds: on [P-fuji1j38ncp5r6dpfjlt64et8cnqvcnp4yum
 Your address that correponds to the private key in .subnet-cli.pk doesnt have sufficient funds. Please refer to the section
 "Create Keys" above to fund your address.
 
-If everything goes fine, You will see this ourput
+If everything goes fine, You will see this output
 
 ```
-subnet-cli wizard --node-ids=NodeID-167TkRiC6RVLboo5U7TpiB6Sk4UfxN8w2 --vm-genesis-path=amafanssubnet_genesis.json --vm-id=juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj --chain-name=amafanssubnet --private-key-path keys/subnet-cli.pk
+subnet-cli wizard --node-ids=NodeID-167TkRiC6RVLboo5U7TpiB6Sk4UfxN8w2\
+         --vm-genesis-path=amafanssubnet_genesis.json \
+         --vm-id=juedWvBi73uAL3JgXYPJsD6d2YyVPAg4xv4RRqdCzaWpTsjVj \
+          --chain-name=amafanssubnet \
+          --private-key-path keys/subnet-cli.pk
+
 2022-06-13T18:20:33.498Z        info    client/client.go:81     fetching X-Chain id
 2022-06-13T18:20:33.543Z        info    client/client.go:87     fetched X-Chain id      {"id": "2JVSBoinj9C2J33VntvzYtVJNZdN2NKiwwKjcumHUWEb5DbBrm"}
 2022-06-13T18:20:33.543Z        info    client/client.go:96     fetching AVAX asset id  {"uri": "https://api.avax-test.network"}
@@ -353,7 +355,7 @@ Use the arrow keys to navigate: ↓ ↑ → ←
   ▸ Yes, let's create! I agree to pay the fee!
     No, stop it!
 ```
-Click on Yes. and you will see the follwoing output
+Click on Yes. and you will see the following output
 
 ```
 
@@ -387,25 +389,25 @@ Use the arrow keys to navigate: ↓ ↑ → ←
 
  {"subnetId": "QWNhddjn6AcebaE8QRwpkL9tgiRmmdFxfHBuWqoKN5pHRWRKV"}
 
- #### Adding your dubnetid to your Fuji code config.json
+ ##### Adding your subnetid to your Fuji code config.json
 
 open config.json present at  ~/.avalanchego/configs/node.json on your fuji node
 and add following details, Replace whitelisted-subnets with the subnet Id  from above.
 ```
  {
-  "http-host": "",
-  "network-id": "fuji",
-  "public-ip": "44.205.74.92",
- "health-check-frequency": "2s",
-   "log-display-level": "DEBUG",
-     "log-level": "DEBUG",
-       "whitelisted-subnets": "QWNhddjn6AcebaE8QRwpkL9tgiRmmdFxfHBuWqoKN5pHRWRKV"
+    "http-host": "",
+    "network-id": "fuji",
+    "public-ip": "44.205.74.92",
+    "health-check-frequency": "2s",
+    "log-display-level": "DEBUG",
+    "log-level": "DEBUG",
+    "whitelisted-subnets": "QWNhddjn6AcebaE8QRwpkL9tgiRmmdFxfHBuWqoKN5pHRWRKV"
 
 }
 ```
-restart your avalanchego service.
+Restart your avalanchego service.
 
-#### Your subnet details and Blockchain details.
+##### Your subnet details and Blockchain details.
 Go back to your console where you ran the subnet wizard command.
 You will see the following lines after continutation 
 
@@ -443,16 +445,15 @@ and Blockchain id is j6TJTXGmMWWBvYHsyp1bZrkiSDJVoG4FpaWz4LrTjSjpE6zxN
 you can check this url https://explorer-xp.avax-test.network/blockchain/j6TJTXGmMWWBvYHsyp1bZrkiSDJVoG4FpaWz4LrTjSjpE6zxN 
 to see the blockchain and subnet.
 
- ![Tux, the Linux mascot](/assets/subnetdetails.png)
+ ![Subnet details](/assets/subnetdetails.png)
 
 
-
-### Make your rpc url available
+## Make your rpc url available
 Install nginx for proxy forward port 80 to  port 9650
-#### Install nginx
+##### Install nginx
 sudo apt-get install nginx
 
-#### Edit /etc/nginx/site-enabled/default and put this config.
+##### Edit /etc/nginx/site-enabled/default and put this config.
 ```
 server {
 
@@ -495,8 +496,8 @@ server {
 
 ```
 
-#### Open port 80 on the security group of your validator ec2 instance.
+##### Open port 80 on the security group of your validator ec2 instance.
 
-#### Access the RPC
+##### Access the RPC
 Now access your RPC at  http://<your validator elastic ip>/ext/bc/j6TJTXGmMWWBvYHsyp1bZrkiSDJVoG4FpaWz4LrTjSjpE6zxN/rpc
 
